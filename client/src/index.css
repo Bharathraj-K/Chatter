@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Bitcount+Prop+Single:wght@100..900&family=Satisfy&display=swap');
+
+@import "tailwindcss";
+
+*{
+  font-family: "Satisfy", cursive;
+}
+
+::-webkit-scrollbar{
+  display: none;
+}
