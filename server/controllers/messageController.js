@@ -1,4 +1,5 @@
-import Message from "../model/Messages";
+import Message from "../model/Messages.js";
+import User from "../model/User.js";
 
 //get all user except logged in user
 
