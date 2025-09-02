@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import "dotenv/config";
 import http from 'http';
 import { connectDB } from './lib/db.js';
+import userRouter from './routes/userRoutes.js';
 
 //express and http server setup
 const app = express();
@@ -14,7 +15,9 @@ const server = http.createServer(app);
 app.use(express.json({ limit: '4mb' }));
 app.use(cors());
 
+//Routes setup
 app.use("/api/status", (req, res) => { res.send("Server is running") });
+app.use("/api/auth", userRouter);
 
 //Connect to MongoDB
 await connectDB();

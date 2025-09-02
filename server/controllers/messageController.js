@@ -1,0 +1,65 @@
+import Message from "../model/Messages";
+
+//get all user except logged in user
+
+
+
+export const getUsersForSidebar = async (req, res) => {
+    try {
+        const userID = req.user._id;
+        const filteredUsers = await User.find({_id : {$ne : userID}}).select("-password");
+
+        //Count of unseen messages from each user
+        const unseenMessages = {};
+        const promises = filteredUsers.map(async (user) => {
+            const messages = await Message.find({sender : user._id, receiver : userID, seen : false})
+            if(messages.length > 0){
+                unseenMessages[user._id] = messages.length;
+            }
+
+            await Promise.all(promises);
+            res.json({success : true, users : filteredUsers, unseenMessages});
+        })
+    } catch (error) {
+        console.log(error.message);
+        res.json({success : false, users : filteredUsers, unseenMessages});
+        
+    }
+}
+
+//get all messages for selected user
+
+export const getMessages = async (req, res) => {
+    try {
+        const {id:selectedUserID} = req.params;
+        const myID = req.user._id;
+
+        const messages = await Message.find({
+            $or : [
+                {sender : myID, receiver : selectedUserID},
+                {sender : selectedUserID, receiver : myID},
+            ]
+        })
+
+        await Message.updateMany({senderId : selectedUserID, receiverId : myID},{ seen : true});
+
+        res.json({success : true, messages});
+
+    } catch (error) {
+        console.log(error.message);
+        res.json({success : false, message : error.message});
+    }
+}
+
+//api to mark messages as seen
+
+export const markMessageAsSeen = async (req, res) => {
+    try {
+        const {id} = req.params;
+        await Message.findByIdAndUpdate(id,{ seen : true});
+        res.json({success : true});
+    } catch (error) {
+        console.log(error.message);
+        res.json({success : false, message : error.message});
+    }
+}
