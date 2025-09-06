@@ -15,18 +15,18 @@ export const getUsersForSidebar = async (req, res) => {
         //Count of unseen messages from each user
         const unseenMessages = {};
         const promises = filteredUsers.map(async (user) => {
-            const messages = await Message.find({sender : user._id, receiver : userID, seen : false})
+            const messages = await Message.find({sender : user._id, receiver : userID, seen : false});
             if(messages.length > 0){
                 unseenMessages[user._id] = messages.length;
             }
+        });
 
-            await Promise.all(promises);
-            res.json({success : true, users : filteredUsers, unseenMessages});
-        })
+        await Promise.all(promises); // Wait for all unseen message counts
+
+        res.json({success : true, users : filteredUsers, unseenMessages});
     } catch (error) {
         console.log(error.message);
-        res.json({success : false, users : filteredUsers, unseenMessages});
-        
+        res.json({success : false, message : error.message});
     }
 }
 
@@ -44,7 +44,7 @@ export const getMessages = async (req, res) => {
             ]
         })
 
-        await Message.updateMany({senderId : selectedUserID, receiverId : myID},{ seen : true});
+        await Message.updateMany({sender : selectedUserID, receiver : myID},{ seen : true});
 
         res.json({success : true, messages});
 
@@ -71,9 +71,9 @@ export const markMessageAsSeen = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
     try {
-        const {text,image} = req.body;
-        const receiverId = req.params.id;
-        const senderId = req.user._id;
+        const {text, image} = req.body;
+        const receiver = req.params.id;
+        const sender = req.user._id;
 
         let imageUrl;
         if(image){
@@ -82,22 +82,21 @@ export const sendMessage = async (req, res) => {
         }
 
         const newMessage = await Message.create({
-            senderId,
-            receiverId,
+            sender,            
+            receiver,          
             text,
-            image : imageUrl,
+            image: imageUrl,
         });
 
-        //emit the message to receiver socket
-        const receiverSocketId = userSocketMap[receiverId];
+        // emit the message to receiver socket
+        const receiverSocketId = userSocketMap[receiver];
         if(receiverSocketId){
             io.to(receiverSocketId).emit("newMessage", newMessage);
         }
 
-        res.json({success : true, message : newMessage});
-
+        res.json({success: true, newMessage}); // Changed Message to newMessage
     } catch (error) {
         console.log(error.message);
-        res.json({success : false, message : error.message});
+        res.json({success: false, message: error.message});
     }
 }
